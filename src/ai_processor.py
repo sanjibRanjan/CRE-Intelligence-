@@ -57,6 +57,7 @@ def llm_enrich_batch(docs: list[NormalisedDocument]) -> None:
     try:
         import google.generativeai as genai
         import json
+        import time
         
         genai.configure(api_key=GEMINI_API_KEY)
         model = genai.GenerativeModel(LLM_MODEL)
@@ -85,7 +86,29 @@ Respond ONLY with valid JSON array containing these 5 fields per object. Do not 
 --- INPUT BATCH ({len(docs)} documents) ---
 {json.dumps(payload, indent=2)}
 """
-        response = model.generate_content(prompt)
+        
+        max_retries = 3
+        base_delay = 20  # Wait 20 seconds initially if rate limited (the error asks for 17.5s)
+        response = None
+        
+        for attempt in range(max_retries):
+            try:
+                response = model.generate_content(prompt)
+                break
+            except Exception as exc:
+                exc_str = str(exc).lower()
+                if "429" in exc_str or "quota" in exc_str or "exhausted" in exc_str:
+                    if attempt < max_retries - 1:
+                        logger.warning("Gemini API Rate limit hit. Retrying in %d seconds... (Attempt %d/%d)", base_delay, attempt + 1, max_retries)
+                        time.sleep(base_delay)
+                        base_delay *= 2  # Exponential backoff
+                        continue
+                logger.error("Failed to generate content: %s", exc)
+                raise exc
+
+        if not response:
+            return
+
         text_resp = response.text.strip()
         
         # Strip potential markdown formatting that Gemini sometimes ignores instructions on
@@ -233,11 +256,18 @@ def process_documents(
     # Do not enrich raw CSV listings which would chew through rate limits.
     enrichable_docs = [d for d in docs if d.source_type in {"rss", "scraping", "api"}]
     
+    import time
+    
     # Process in batches of 5 to avoid overloading the LLM output buffer
     batch_size = 5
     for i in range(0, len(enrichable_docs), batch_size):
         batch = enrichable_docs[i:i + batch_size]
         llm_enrich_batch(batch)
+        
+        # Add a delay between batches to respect free tier RPM limits (15 Requests/Min)
+        if i + batch_size < len(enrichable_docs):
+            logger.info("Waiting 4 seconds before next Gemini API batch to respect rate limits...")
+            time.sleep(4)
 
     # ── 2. Vector Chunking & Embedding ──
     all_records: list[dict[str, Any]] = []
