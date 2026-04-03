@@ -31,8 +31,8 @@ services:
     environment:
       - QDRANT_HOST=qdrant
       - QDRANT_PORT=6333
-      - FMP_API_KEY=TfLAPUJ5KULWWPCFtZdl9rVuc8TcUP1j
-      - GEMINI_API_KEY=AIzaSyAF7QtWCtXtMNA7PGlBtedFIiSCCTNjYeo
+      - FMP_API_KEY=${FMP_API_KEY}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
     depends_on:
       - qdrant
     restart: unless-stopped
