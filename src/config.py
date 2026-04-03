@@ -83,4 +83,4 @@ QDRANT_COLLECTION: str = os.getenv("QDRANT_COLLECTION", "cre_intelligence")
 # LLM API (OpenAI / Gemini — used *only* for final RAG synthesis)
 # ---------------------------------------------------------------------------
 GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
-LLM_MODEL: str = os.getenv("LLM_MODEL", "gemini-1.5-flash")
+LLM_MODEL: str = os.getenv("LLM_MODEL", "gemini-2.5-flash")
