@@ -1,4 +1,3 @@
-
 # CRE-Intelligence Pipeline
 
 An end-to-end, AI-powered Commercial Real Estate (CRE) data intelligence pipeline and dashboard. This application ingests real-time RSS feeds, scrapes web insights, pulls financial API data, and merges it with static CSV/XLSX datasets. It structures this data using a unified Pydantic schema, enriches it via an automated Google Gemini LLM processing pipeline, embeds the documents into a Qdrant Vector Database, and surfaces insights through an interactive Streamlit dashboard.
