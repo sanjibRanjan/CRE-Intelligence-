@@ -30,6 +30,7 @@ from src.config import (
     QDRANT_COLLECTION,
     QDRANT_HOST,
     QDRANT_PORT,
+    QDRANT_API_KEY,
 )
 
 logger = logging.getLogger(__name__)
@@ -53,7 +54,21 @@ def get_qdrant_client() -> QdrantClient:
     global _client  # noqa: PLW0603
     if _client is None:
         try:
-            _client = QdrantClient(host=QDRANT_HOST, port=QDRANT_PORT, timeout=10)
+            if QDRANT_API_KEY:
+                # If an API key is provided, assume we are connecting to Qdrant Cloud
+                # Qdrant Cloud URLs typically require https and no explicit port if it's 443
+                url = QDRANT_HOST if QDRANT_HOST.startswith("http") else f"https://{QDRANT_HOST}"
+                _client = QdrantClient(
+                    url=url,
+                    api_key=QDRANT_API_KEY,
+                    timeout=10,
+                )
+                logger.info("Connecting to Qdrant Cloud at %s", url)
+            else:
+                # Local/Unauthenticated connection
+                _client = QdrantClient(host=QDRANT_HOST, port=QDRANT_PORT, timeout=10)
+                logger.info("Connecting to Qdrant at %s:%s", QDRANT_HOST, QDRANT_PORT)
+                
             # Quick health check
             _client.get_collections()
             logger.info("Connected to Qdrant at %s:%s", QDRANT_HOST, QDRANT_PORT)

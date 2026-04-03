@@ -76,6 +76,7 @@ CHUNK_WORD_SIZE: int = int(os.getenv("CHUNK_WORD_SIZE", "300"))
 # ---------------------------------------------------------------------------
 QDRANT_HOST: str = os.getenv("QDRANT_HOST", "localhost")
 QDRANT_PORT: int = int(os.getenv("QDRANT_PORT", "6333"))
+QDRANT_API_KEY: str = os.getenv("QDRANT_API_KEY", "")
 QDRANT_COLLECTION: str = os.getenv("QDRANT_COLLECTION", "cre_intelligence")
 
 # ---------------------------------------------------------------------------
