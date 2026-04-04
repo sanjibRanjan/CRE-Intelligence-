@@ -1067,7 +1067,10 @@ def _render_entity_chart(df: pd.DataFrame) -> None:
         plot_bgcolor="rgba(0,0,0,0)",
         font=dict(family="Inter", color="#1e293b"),
         margin=dict(l=20, r=20, t=40, b=80),
-        title=dict(text="Top Entity Mentions by Source", font_size=16, color="#1e293b"),
+        title=dict(
+            text="Top Entity Mentions by Source",
+            font=dict(size=16, color="#1e293b")
+        ),
         xaxis_tickangle=-45,
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
     )
@@ -1115,7 +1118,10 @@ def _render_timeline_chart(df: pd.DataFrame) -> None:
         plot_bgcolor="rgba(0,0,0,0)",
         font=dict(family="Inter", color="#1e293b"),
         margin=dict(l=20, r=20, t=40, b=40),
-        title=dict(text="Publication Timeline", font_size=16, color="#1e293b"),
+        title=dict(
+            text="Publication Timeline",
+            font=dict(size=16, color="#1e293b")
+        ),
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
     )
     st.plotly_chart(fig, key="timeline_chart")
@@ -1155,7 +1161,10 @@ def _render_lending_chart(lending_data: list[dict[str, Any]]) -> None:
                 paper_bgcolor="rgba(0,0,0,0)",
                 plot_bgcolor="rgba(0,0,0,0)",
                 font=dict(family="Inter", color="#1e293b"),
-                title=dict(text="Total Lending Volume by Region", font_size=14, color="#1e293b"),
+                title=dict(
+                    text="Total Lending Volume by Region",
+                    font=dict(size=14, color="#1e293b")
+                ),
                 showlegend=False,
                 margin=dict(l=20, r=20, t=50, b=40),
             )
@@ -1186,7 +1195,10 @@ def _render_lending_chart(lending_data: list[dict[str, Any]]) -> None:
                 paper_bgcolor="rgba(0,0,0,0)",
                 plot_bgcolor="rgba(0,0,0,0)",
                 font=dict(family="Inter", color="#1e293b"),
-                title=dict(text="Top 10 Lenders by Volume", font_size=14, color="#1e293b"),
+                title=dict(
+                    text="Top 10 Lenders by Volume",
+                    font=dict(size=14, color="#1e293b")
+                ),
                 margin=dict(l=20, r=20, t=50, b=40),
                 coloraxis_showscale=False,
             )
