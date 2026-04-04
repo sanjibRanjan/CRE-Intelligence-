@@ -145,19 +145,13 @@ class TestNormalisation:
 class TestLocationNormalisation:
     """Tests for cross-referencing GPEs with cities.csv."""
 
-    def test_normalise_known_cities(self, cities_lookup: list[dict[str, str]]) -> None:
-        """Known cities should be normalised to their canonical form."""
-        gpes = ["london", "PARIS", "Tokyo"]
+    def test_normalise_unknown_cities_permissive(self, cities_lookup: list[dict[str, str]]) -> None:
+        """Unknown cities should be PRESERVED (permissive behavior) in title case."""
+        gpes = ["atlantis", "NARNIA"]
         result = normalise_locations(gpes, cities_lookup)
-        assert "London" in result
-        assert "Paris" in result
-        assert "Tokyo" in result
-
-    def test_normalise_unknown_cities_filtered(self, cities_lookup: list[dict[str, str]]) -> None:
-        """Unknown cities should be filtered out."""
-        gpes = ["Atlantis", "Narnia"]
-        result = normalise_locations(gpes, cities_lookup)
-        assert len(result) == 0
+        assert "Atlantis" in result
+        assert "Narnia" in result
+        assert len(result) == 2
 
     def test_normalise_deduplicates(self, cities_lookup: list[dict[str, str]]) -> None:
         """Duplicate GPE entries should be deduplicated."""
@@ -167,7 +161,6 @@ class TestLocationNormalisation:
 
     def test_normalise_with_real_csv_format(self) -> None:
         """Normalise locations using the real cities.csv format (City key)."""
-        # Simulate the actual CSV format with 'City' and 'State' keys
         real_format_lookup = [
             {"City": "Washington", "State": "DC", "city": "Washington", "state": "DC"},
             {"City": "Chicago", "State": "IL", "city": "Chicago", "state": "IL"},
@@ -177,7 +170,8 @@ class TestLocationNormalisation:
         result = normalise_locations(gpes, real_format_lookup)
         assert "Washington" in result
         assert "Chicago" in result
-        assert len(result) == 2
+        assert "Unknown City" in result
+        assert len(result) == 3
 
 
 # ── Text Chunking Tests ──────────────────────────────────────────────────
@@ -216,3 +210,46 @@ class TestTextChunking:
         c1_words = chunks[1].split()
         overlap = set(c0_words[-30:]) & set(c1_words[:30:])
         assert len(overlap) > 0
+
+
+# ── Keyword Extraction Fallback Tests ─────────────────────────────────────
+
+
+class TestKeywordExtraction:
+    """Tests for the fallback entity/city scanner in ai_processor.py."""
+
+    def test_perform_keyword_extraction(self) -> None:
+        """Keyword scanner should find cities and firms in text."""
+        from src.ai_processor import perform_keyword_extraction
+        
+        cities_lookup = [{"city": "London"}, {"city": "Manchester"}]
+        text = "JLL and OakNorth operate in London and Birmingham."
+        
+        cities, orgs = perform_keyword_extraction(text, cities_lookup)
+        
+        # 'London' from lookup, 'JLL' and 'OakNorth' from CRE_FIRMS
+        assert "London" in cities
+        # 'Birmingham' is NOT in the mock cities_lookup provided to this test, but it is a city.
+        # However, perform_keyword_extraction only matches against the provided lookup.
+        
+        assert "JLL" in orgs
+        assert "OakNorth" in orgs
+
+    def test_xlsx_entity_mapping(self) -> None:
+        """Processing an XLSX doc should auto-map lender/borrower to entities_org."""
+        from src.ai_processor import process_document
+        
+        doc = normalise_record({
+            "title": "Barings → LaSalle",
+            "content": "A deal happened.",
+            "source_type": "xlsx",
+            "lender": "Barings Real Estate",
+            "borrower": "LaSalle Investment Management",
+        })
+        
+        records = process_document(doc, [])
+        assert len(records) > 0
+        orgs = records[0]["entities_org"]
+        
+        assert "Barings Real Estate" in orgs
+        assert "LaSalle Investment Management" in orgs

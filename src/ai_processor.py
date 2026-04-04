@@ -19,6 +19,22 @@ from src.config import CHUNK_WORD_SIZE, EMBEDDING_MODEL, GEMINI_API_KEY, LLM_MOD
 from src.normalization import NormalisedDocument
 
 logger = logging.getLogger(__name__)
+import re
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Entity Registry (Fallback for when AI is OFF)
+# ═══════════════════════════════════════════════════════════════════════════
+
+CRE_FIRMS = [
+    "OakNorth", "Barings", "Barings Real Estate", "LaSalle", "LaSalle Investment Management",
+    "JLL", "Jones Lang LaSalle", "CBRE", "Savills", "Cushman & Wakefield", 
+    "Knight Frank", "Avison Young", "Colliers", "BNP Paribas Real Estate",
+    "Altus Group", "Property Week", "Oxford Properties", "Landsec", "British Land",
+    "HSBC", "Barclays", "Lloyds", "NatWest", "Santander", "Blackstone", "Starwood",
+    "Brookfield", "Hines", "M&G", "Legal & General", "Schroders", "Aberdeen",
+    "Allianz", "Axa", "Generali", "PIMCO", "Apollo", "KKR", "Hancock", "Nuveen"
+]
+
 
 # ═══════════════════════════════════════════════════════════════════════════
 # Global Model Singletons
@@ -166,6 +182,35 @@ def normalise_locations(
 
     return sorted(normalised)
 
+
+def perform_keyword_extraction(
+    text: str,
+    cities_lookup: list[dict[str, str]],
+) -> tuple[list[str], list[str]]:
+    """Scan text for known cities and organisations (fallback)."""
+    found_cities = set()
+    found_orgs = set()
+    text_lower = text.lower()
+
+    # 1. Look for cities
+    for row in cities_lookup:
+        city = row.get("city") or row.get("City") or ""
+        city = city.strip().strip('"')
+        if city and len(city) > 3: # Avoid very short names matching accidentally
+            # Use regex to match only full words
+            pattern = rf"\b{re.escape(city.lower())}\b"
+            if re.search(pattern, text_lower):
+                found_cities.add(city)
+
+    # 2. Look for organisations
+    for org in CRE_FIRMS:
+        if org and len(org) > 2:
+            pattern = rf"\b{re.escape(org.lower())}\b"
+            if re.search(pattern, text_lower):
+                found_orgs.add(org)
+
+    return sorted(found_cities), sorted(found_orgs)
+
 # ═══════════════════════════════════════════════════════════════════════════
 # Text Chunking
 # ═══════════════════════════════════════════════════════════════════════════
@@ -215,7 +260,27 @@ def process_document(
     """Process a single document into embedded chunk records."""
     full_text = f"{doc.title}. {doc.content}"
     
-    # Locations are normalised from whatever GPEs were found (either by LLM or empty list)
+    # Combine AI-extracted GPEs with a keyword fallback to ensure data visibility
+    fallback_cities, fallback_orgs = perform_keyword_extraction(full_text, cities_lookup)
+    
+    # Merge ORGs
+    doc_orgs = set(doc.metadata.entities_org)
+    doc_orgs.update(fallback_orgs)
+    
+    # Special: XLSX data already has Lender/Borrower in metadata
+    lender = doc.metadata.extra.get("lender")
+    borrower = doc.metadata.extra.get("borrower")
+    if lender: doc_orgs.add(str(lender))
+    if borrower: doc_orgs.add(str(borrower))
+    
+    doc.metadata.entities_org = sorted(list(doc_orgs))
+
+    # Merge GPEs/Locations
+    all_gpes = set(doc.metadata.entities_gpe)
+    all_gpes.update(fallback_cities)
+    doc.metadata.entities_gpe = sorted(list(all_gpes))
+
+    # Locations are normalised from whatever GPEs were found (either by LLM or keyword)
     doc.metadata.locations = normalise_locations(doc.metadata.entities_gpe, cities_lookup)
 
     chunks = chunk_text(full_text)
