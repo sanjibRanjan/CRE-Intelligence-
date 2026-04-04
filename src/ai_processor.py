@@ -248,26 +248,29 @@ def process_document(
 def process_documents(
     docs: list[NormalisedDocument],
     cities_lookup: list[dict[str, str]],
+    enrich_llm: bool = False,
 ) -> list[dict[str, Any]]:
     """Process a batch of normalised documents through the AI pipeline."""
     
     # ── 1. Batch LLM Enrichment ──
-    # ONLY enrich text-heavy analytical sources (RSS, Scraping, API). 
-    # Do not enrich raw CSV listings which would chew through rate limits.
-    enrichable_docs = [d for d in docs if d.source_type in {"rss", "scraping", "api"}]
-    
-    import time
-    
-    # Process in batches of 5 to avoid overloading the LLM output buffer
-    batch_size = 5
-    for i in range(0, len(enrichable_docs), batch_size):
-        batch = enrichable_docs[i:i + batch_size]
-        llm_enrich_batch(batch)
+    # ONLY enrich if explicitly requested (to save Gemini API quota).
+    if enrich_llm:
+        enrichable_docs = [d for d in docs if d.source_type in {"rss", "scraping", "api"}]
         
-        # Add a delay between batches to respect free tier RPM limits (15 Requests/Min)
-        if i + batch_size < len(enrichable_docs):
-            logger.info("Waiting 4 seconds before next Gemini API batch to respect rate limits...")
-            time.sleep(4)
+        import time
+        
+        # Process in batches of 5 to avoid overloading the LLM output buffer
+        batch_size = 5
+        for i in range(0, len(enrichable_docs), batch_size):
+            batch = enrichable_docs[i:i + batch_size]
+            llm_enrich_batch(batch)
+            
+            # Add a delay between batches to respect free tier RPM limits (15 Requests/Min)
+            if i + batch_size < len(enrichable_docs):
+                logger.info("Waiting 4 seconds before next Gemini API batch to respect rate limits...")
+                time.sleep(4)
+    else:
+        logger.info("Skipping LLM enrichment to preserve API quota.")
 
     # ── 2. Vector Chunking & Embedding ──
     all_records: list[dict[str, Any]] = []

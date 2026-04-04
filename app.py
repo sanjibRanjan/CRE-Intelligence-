@@ -202,9 +202,12 @@ def _load_embedder():
 
 
 @st.cache_data(show_spinner="Ingesting data from 6 sources…", ttl=3600)
-def _run_pipeline() -> tuple[list[dict[str, Any]], list[dict[str, str]], list[dict[str, Any]]]:
+def _run_pipeline(enrich_llm: bool = False) -> tuple[list[dict[str, Any]], list[dict[str, str]], list[dict[str, Any]]]:
     """Execute the full ingestion → normalisation → AI processing pipeline.
 
+    Args:
+        enrich_llm: Whether to perform expensive Gemini API enrichment.
+        
     Returns:
         Tuple of (processed chunk records, cities lookup table, raw lending data).
     """
@@ -225,7 +228,7 @@ def _run_pipeline() -> tuple[list[dict[str, Any]], list[dict[str, str]], list[di
     docs = normalise_batch(all_raw)
 
     # 3. AI processing
-    records = process_documents(docs, cities)
+    records = process_documents(docs, cities, enrich_llm=enrich_llm)
 
     return records, cities, lending_data
 
@@ -282,13 +285,23 @@ Structure your answer beautifully with markdown formatting (bullet points, bold 
         response = model.generate_content(prompt)
         answer = response.text
 
-        answer += f"\\n\\n**Sources consulted:**\\n{chr(10).join(unique_sources)}"
+        answer += f"\n\n**Sources consulted:**\n{chr(10).join(unique_sources)}"
         return answer
     except Exception as exc:
+        exc_str = str(exc).lower()
+        if "429" in exc_str or "quota" in exc_str:
+            logger.warning("Gemini API Quota reached (429).")
+            return (
+                f"### ⚠️ Quota Reached: Daily AI Limit Exceeded\n\n"
+                f"Your Gemini API key (`{LLM_MODEL}`) has reached its daily quota (typically 20 requests for Flash free tier).\n\n"
+                f"**However, I found the following relevant sources in the knowledge base.** Please consult these directly:\n\n"
+                f"{chr(10).join(unique_sources)}"
+            )
+        
         logger.error("Gemini API generation failed: %s", exc)
         return (
-            f"**Error generating response via Gemini:** {exc}\\n\\n"
-            f"**Retrieved Sources:**\\n{chr(10).join(unique_sources)}"
+            f"**Error generating response via Gemini:** {exc}\n\n"
+            f"**Retrieved Sources:**\n{chr(10).join(unique_sources)}"
         )
 
 
@@ -458,23 +471,46 @@ def main() -> None:
     </div>
     """, unsafe_allow_html=True)
 
+    # ── Pipeline Interaction ──────────────────────────────────────────────
+    # We use session state to track if we should skip the Gemini quota-heavy enrichment
+    enrich_enabled = False # Default to OFF
+
     # ── Run Pipeline & Store in Qdrant ────────────────────────────────────
-    with st.spinner("🔄 Running data pipeline — ingesting, normalising, embedding…"):
-        records, cities, lending_data = _run_pipeline()
+    with st.spinner("🔄 Loading market intelligence…"):
+        # Initialise Qdrant collection (persistent by default)
+        init_collection(recreate=False)
+        
+        # Run pipeline (cached results)
+        records, cities, lending_data = _run_pipeline(enrich_llm=enrich_enabled)
 
-        # Initialise Qdrant collection and upsert
-        init_collection(recreate=True)
-        upsert_records([dict(r) for r in records])
-
-    payloads = get_all_payloads()
+        # Retrieve current data
+        payloads = get_all_payloads()
+        
+        # If collection is empty, perform initial bootstrap
+        if not payloads:
+            with st.status("📥 Performing initial data ingestion...", expanded=True) as status:
+                st.write("Processing documents...")
+                upsert_records([dict(r) for r in records])
+                st.write("Indexing vectors...")
+                payloads = get_all_payloads()
+                status.update(label="✅ Ingestion complete!", state="complete", expanded=False)
 
     # ── Build DataFrame for analytics ─────────────────────────────────────
     df = _build_analytics_df(payloads)
 
     # ── Sidebar ───────────────────────────────────────────────────────────
     with st.sidebar:
-        st.markdown("### 🎛️ Filters")
+        st.markdown("### 🎛️ Pipeline Control")
+        
+        st.info("✨ AI Enrichment is **OFF** to save your Gemini quota (20 req/day).")
+        
+        if st.button("🔄 Refresh & Re-ingest Data", help="Wipes the vector database and starts ingestion from scratch."):
+            st.cache_data.clear()
+            init_collection(recreate=True)
+            st.rerun()
+
         st.markdown("---")
+        st.markdown("### 🎛️ Filters")
 
         # Source type filter
         source_types = ["All"] + sorted(df["source_type"].unique().tolist()) if not df.empty else ["All"]
@@ -533,10 +569,10 @@ def main() -> None:
         </div>
         """, unsafe_allow_html=True)
     with col2:
-        unique_docs = filtered_df["doc_id"].nunique() if not filtered_df.empty else 0
+        unique_docs_count = filtered_df["doc_id"].nunique() if not filtered_df.empty else 0
         st.markdown(f"""
         <div class="metric-card">
-            <div class="metric-value">{unique_docs}</div>
+            <div class="metric-value">{unique_docs_count}</div>
             <div class="metric-label">Unique Documents</div>
         </div>
         """, unsafe_allow_html=True)
