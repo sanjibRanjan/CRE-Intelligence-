@@ -156,9 +156,13 @@ def normalise_locations(
 
     normalised: set[str] = set()
     for gpe in extracted_gpes:
-        canonical = city_names.get(gpe.strip().lower())
+        gpe_clean = gpe.strip()
+        canonical = city_names.get(gpe_clean.lower())
         if canonical:
             normalised.add(canonical)
+        elif gpe_clean:
+            # If not in our US-centric CSV, keep it as is (but title case)
+            normalised.add(gpe_clean.title())
 
     return sorted(normalised)
 
