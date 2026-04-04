@@ -75,114 +75,523 @@ st.set_page_config(
 # ═══════════════════════════════════════════════════════════════════════════
 st.markdown("""
 <style>
-    /* === Global === */
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    /* ══════════════════════════════════════════════════
+       FONTS
+    ══════════════════════════════════════════════════ */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap');
 
-    .stApp {
+    /* ══════════════════════════════════════════════════
+       GLOBAL & BACKGROUND
+    ══════════════════════════════════════════════════ */
+    html, body, [data-testid="stAppViewContainer"] {
         font-family: 'Inter', sans-serif;
     }
 
-    /* === Metric cards === */
-    .metric-card {
-        background: linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(139, 92, 246, 0.08) 100%);
-        border: 1px solid rgba(99, 102, 241, 0.25);
-        border-radius: 16px;
-        padding: 24px;
-        margin: 8px 0;
-        backdrop-filter: blur(12px);
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
-    }
-    .metric-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(99, 102, 241, 0.2);
-    }
-    .metric-value {
-        font-size: 2.2rem;
-        font-weight: 700;
-        background: linear-gradient(135deg, #818cf8, #c084fc);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        margin-bottom: 4px;
-    }
-    .metric-label {
-        font-size: 0.85rem;
-        font-weight: 500;
-        opacity: 0.75;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
+    [data-testid="stAppViewContainer"] {
+        background: linear-gradient(135deg, #0a0a1a 0%, #0f0f2e 30%, #0d1117 60%, #0a0a1a 100%);
+        min-height: 100vh;
     }
 
-    /* === Section headers === */
-    .section-header {
-        font-size: 1.3rem;
-        font-weight: 600;
-        margin: 32px 0 16px 0;
-        padding-bottom: 8px;
-        border-bottom: 2px solid rgba(99, 102, 241, 0.3);
-        display: flex;
-        align-items: center;
-        gap: 8px;
+    [data-testid="stAppViewContainer"]::before {
+        content: '';
+        position: fixed;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(ellipse at 20% 20%, rgba(99,102,241,0.06) 0%, transparent 50%),
+                    radial-gradient(ellipse at 80% 80%, rgba(192,132,252,0.05) 0%, transparent 50%),
+                    radial-gradient(ellipse at 50% 50%, rgba(59,130,246,0.04) 0%, transparent 50%);
+        pointer-events: none;
+        z-index: 0;
     }
 
-    /* === Insight cards === */
-    .insight-card {
-        background: linear-gradient(135deg, rgba(34, 197, 94, 0.10) 0%, rgba(16, 185, 129, 0.06) 100%);
-        border: 1px solid rgba(34, 197, 94, 0.25);
-        border-radius: 14px;
-        padding: 20px;
-        margin: 10px 0;
-    }
-    .insight-card h4 {
-        margin: 0 0 8px 0;
-        color: #4ade80;
-    }
-
-    /* === Search result cards === */
-    .result-card {
-        background: rgba(255, 255, 255, 0.04);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 12px;
-        padding: 18px;
-        margin: 10px 0;
-        transition: border-color 0.2s ease;
-    }
-    .result-card:hover {
-        border-color: rgba(99, 102, 241, 0.5);
-    }
-    .result-score {
-        display: inline-block;
-        background: linear-gradient(135deg, #6366f1, #8b5cf6);
-        color: white;
-        padding: 3px 10px;
-        border-radius: 20px;
-        font-size: 0.75rem;
-        font-weight: 600;
-    }
-
-    /* === Sidebar === */
-    section[data-testid="stSidebar"] {
-        background: linear-gradient(180deg, rgba(30, 27, 75, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%);
-    }
-
-    /* === RAG answer box === */
-    .rag-answer {
-        background: linear-gradient(135deg, rgba(59, 130, 246, 0.10) 0%, rgba(99, 102, 241, 0.06) 100%);
-        border: 1px solid rgba(59, 130, 246, 0.3);
-        border-radius: 14px;
-        padding: 22px;
-        margin: 16px 0;
-        line-height: 1.7;
-    }
-
-    /* === Hide Streamlit branding === */
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
-
-    /* === Plotly figure container === */
-    .stPlotlyChart {
-        border-radius: 12px;
+    /* ══════════════════════════════════════════════════
+       HERO HEADER
+    ══════════════════════════════════════════════════ */
+    .hero-wrapper {
+        position: relative;
+        text-align: center;
+        padding: 48px 20px 36px;
+        margin-bottom: 8px;
         overflow: hidden;
     }
+    .hero-wrapper::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(ellipse at 50% 0%, rgba(99,102,241,0.18) 0%, transparent 70%);
+        pointer-events: none;
+    }
+    .hero-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: rgba(99,102,241,0.15);
+        border: 1px solid rgba(99,102,241,0.35);
+        border-radius: 100px;
+        padding: 5px 16px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #a5b4fc;
+        margin-bottom: 20px;
+    }
+    .hero-title {
+        font-family: 'Space Grotesk', sans-serif;
+        font-size: clamp(2rem, 5vw, 3.2rem);
+        font-weight: 700;
+        line-height: 1.15;
+        margin: 0 0 12px 0;
+        background: linear-gradient(135deg, #e0e7ff 0%, #818cf8 35%, #c084fc 65%, #f472b6 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        letter-spacing: -0.02em;
+    }
+    .hero-sub {
+        font-size: 1rem;
+        color: rgba(160,170,210,0.75);
+        font-weight: 400;
+        letter-spacing: 0.01em;
+        margin: 0;
+    }
+    .hero-divider {
+        width: 80px;
+        height: 3px;
+        background: linear-gradient(90deg, #6366f1, #c084fc, #f472b6);
+        border-radius: 10px;
+        margin: 20px auto 0;
+    }
+    .hero-pills {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-top: 20px;
+    }
+    .hero-pill {
+        background: rgba(255,255,255,0.05);
+        border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 100px;
+        padding: 4px 14px;
+        font-size: 0.75rem;
+        color: rgba(180,190,220,0.85);
+        font-weight: 500;
+    }
+
+    /* ══════════════════════════════════════════════════
+       METRIC CARDS
+    ══════════════════════════════════════════════════ */
+    .metric-card {
+        position: relative;
+        background: rgba(15, 15, 40, 0.6);
+        border: 1px solid rgba(99,102,241,0.2);
+        border-radius: 20px;
+        padding: 28px 24px;
+        margin: 6px 0;
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        overflow: hidden;
+        transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+    }
+    .metric-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(99,102,241,0.5), transparent);
+    }
+    .metric-card::after {
+        content: '';
+        position: absolute;
+        top: -40px;
+        right: -40px;
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(99,102,241,0.12) 0%, transparent 70%);
+        pointer-events: none;
+    }
+    .metric-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 20px 40px rgba(99,102,241,0.2), 0 0 0 1px rgba(99,102,241,0.3);
+        border-color: rgba(99,102,241,0.4);
+    }
+    .metric-icon {
+        font-size: 1.6rem;
+        margin-bottom: 10px;
+        display: block;
+    }
+    .metric-value {
+        font-family: 'Space Grotesk', sans-serif;
+        font-size: 2.6rem;
+        font-weight: 700;
+        background: linear-gradient(135deg, #e0e7ff, #818cf8, #c084fc);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        line-height: 1;
+        margin-bottom: 6px;
+        letter-spacing: -0.02em;
+    }
+    .metric-label {
+        font-size: 0.78rem;
+        font-weight: 600;
+        color: rgba(148,163,184,0.9);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+    }
+    .metric-trend {
+        font-size: 0.72rem;
+        color: #4ade80;
+        font-weight: 500;
+        margin-top: 4px;
+    }
+
+    /* ══════════════════════════════════════════════════
+       SECTION HEADERS
+    ══════════════════════════════════════════════════ */
+    .section-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-family: 'Space Grotesk', sans-serif;
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: #e0e7ff;
+        margin: 40px 0 20px 0;
+        padding: 0 0 14px 0;
+        position: relative;
+        letter-spacing: -0.01em;
+    }
+    .section-header::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 1px;
+        background: linear-gradient(90deg, rgba(99,102,241,0.6), rgba(192,132,252,0.3), transparent);
+    }
+    .section-header .sh-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        background: linear-gradient(135deg, rgba(99,102,241,0.3), rgba(192,132,252,0.2));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+        border: 1px solid rgba(99,102,241,0.3);
+    }
+
+    /* ══════════════════════════════════════════════════
+       INSIGHT CARDS
+    ══════════════════════════════════════════════════ */
+    .insight-card {
+        position: relative;
+        background: rgba(10, 25, 20, 0.55);
+        border: 1px solid rgba(52,211,153,0.2);
+        border-radius: 18px;
+        padding: 24px;
+        margin: 12px 0;
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        overflow: hidden;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .insight-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(52,211,153,0.5), transparent);
+    }
+    .insight-card::after {
+        content: '';
+        position: absolute;
+        bottom: -30px;
+        right: -30px;
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(52,211,153,0.08) 0%, transparent 70%);
+        pointer-events: none;
+    }
+    .insight-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 30px rgba(52,211,153,0.12);
+    }
+    .insight-card h4 {
+        font-family: 'Space Grotesk', sans-serif;
+        margin: 0 0 10px 0;
+        font-size: 0.95rem;
+        font-weight: 600;
+        background: linear-gradient(135deg, #4ade80, #34d399);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        letter-spacing: -0.01em;
+    }
+    .insight-card p {
+        margin: 0;
+        font-size: 0.88rem;
+        line-height: 1.7;
+        color: rgba(160,200,180,0.9);
+    }
+
+    /* ══════════════════════════════════════════════════
+       RESULT CARDS
+    ══════════════════════════════════════════════════ */
+    .result-card {
+        position: relative;
+        background: rgba(15,15,35,0.5);
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 16px;
+        padding: 20px;
+        margin: 10px 0;
+        backdrop-filter: blur(12px);
+        transition: all 0.25s ease;
+        overflow: hidden;
+    }
+    .result-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+    }
+    .result-card:hover {
+        border-color: rgba(99,102,241,0.4);
+        box-shadow: 0 8px 30px rgba(99,102,241,0.12);
+        transform: translateY(-1px);
+    }
+    .result-score {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        background: linear-gradient(135deg, rgba(99,102,241,0.3), rgba(139,92,246,0.3));
+        border: 1px solid rgba(99,102,241,0.4);
+        color: #a5b4fc;
+        padding: 3px 12px;
+        border-radius: 100px;
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+    }
+    .result-title {
+        font-weight: 600;
+        font-size: 0.92rem;
+        color: #e0e7ff;
+        margin: 8px 0 4px;
+    }
+    .result-source {
+        font-size: 0.75rem;
+        color: rgba(148,163,184,0.7);
+        font-weight: 500;
+    }
+    .result-text {
+        margin: 10px 0 0 0;
+        font-size: 0.85rem;
+        line-height: 1.65;
+        color: rgba(160,170,200,0.8);
+    }
+
+    /* ══════════════════════════════════════════════════
+       SIDEBAR
+    ══════════════════════════════════════════════════ */
+    section[data-testid="stSidebar"] {
+        background: linear-gradient(180deg,
+            rgba(10,10,30,0.98) 0%,
+            rgba(8,8,25,0.99) 100%
+        ) !important;
+        border-right: 1px solid rgba(99,102,241,0.12) !important;
+    }
+    section[data-testid="stSidebar"]::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 1px;
+        height: 100%;
+        background: linear-gradient(180deg, transparent, rgba(99,102,241,0.3), transparent);
+        pointer-events: none;
+    }
+
+    /* ══════════════════════════════════════════════════
+       RAG ANSWER BOX
+    ══════════════════════════════════════════════════ */
+    .rag-answer {
+        position: relative;
+        background: rgba(10, 15, 40, 0.6);
+        border: 1px solid rgba(59,130,246,0.25);
+        border-radius: 18px;
+        padding: 28px;
+        margin: 16px 0;
+        line-height: 1.75;
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        overflow: hidden;
+        font-size: 0.92rem;
+        color: rgba(200,210,240,0.95);
+    }
+    .rag-answer::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: linear-gradient(90deg, #6366f1, #3b82f6, #06b6d4);
+    }
+    .rag-answer::after {
+        content: '⚡ AI Response';
+        position: absolute;
+        top: 14px;
+        right: 18px;
+        font-size: 0.65rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: rgba(99,102,241,0.7);
+    }
+
+    /* ══════════════════════════════════════════════════
+       STREAMLIT WIDGET OVERRIDES
+    ══════════════════════════════════════════════════ */
+    /* Text input */
+    .stTextInput > div > div > input {
+        background: rgba(15,15,40,0.7) !important;
+        border: 1px solid rgba(99,102,241,0.25) !important;
+        border-radius: 12px !important;
+        color: #e0e7ff !important;
+        font-family: 'Inter', sans-serif !important;
+        font-size: 0.9rem !important;
+        padding: 12px 16px !important;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
+    }
+    .stTextInput > div > div > input:focus {
+        border-color: rgba(99,102,241,0.6) !important;
+        box-shadow: 0 0 0 3px rgba(99,102,241,0.12) !important;
+        outline: none !important;
+    }
+    .stTextInput > div > div > input::placeholder {
+        color: rgba(148,163,184,0.5) !important;
+    }
+
+    /* Selectbox */
+    .stSelectbox > div > div {
+        background: rgba(15,15,40,0.7) !important;
+        border: 1px solid rgba(99,102,241,0.2) !important;
+        border-radius: 10px !important;
+        color: #e0e7ff !important;
+    }
+
+    /* Tabs */
+    .stTabs [data-baseweb="tab-list"] {
+        background: rgba(15,15,40,0.5);
+        border-radius: 12px;
+        padding: 4px;
+        gap: 4px;
+        border: 1px solid rgba(99,102,241,0.15);
+    }
+    .stTabs [data-baseweb="tab"] {
+        border-radius: 8px;
+        font-family: 'Inter', sans-serif;
+        font-weight: 500;
+        font-size: 0.85rem;
+        color: rgba(148,163,184,0.8);
+        padding: 8px 20px;
+        transition: all 0.2s ease;
+    }
+    .stTabs [aria-selected="true"] {
+        background: linear-gradient(135deg, rgba(99,102,241,0.4), rgba(139,92,246,0.3)) !important;
+        color: #e0e7ff !important;
+        box-shadow: 0 2px 10px rgba(99,102,241,0.2);
+    }
+
+    /* Buttons */
+    .stButton > button {
+        background: linear-gradient(135deg, rgba(99,102,241,0.3), rgba(139,92,246,0.2)) !important;
+        border: 1px solid rgba(99,102,241,0.4) !important;
+        border-radius: 10px !important;
+        color: #e0e7ff !important;
+        font-family: 'Inter', sans-serif !important;
+        font-weight: 500 !important;
+        font-size: 0.85rem !important;
+        transition: all 0.2s ease !important;
+        padding: 8px 20px !important;
+    }
+    .stButton > button:hover {
+        background: linear-gradient(135deg, rgba(99,102,241,0.5), rgba(139,92,246,0.35)) !important;
+        box-shadow: 0 4px 20px rgba(99,102,241,0.25) !important;
+        transform: translateY(-1px) !important;
+    }
+
+    /* Expander */
+    .streamlit-expanderHeader {
+        background: rgba(15,15,40,0.5) !important;
+        border: 1px solid rgba(99,102,241,0.15) !important;
+        border-radius: 12px !important;
+        color: #c7d2fe !important;
+        font-weight: 500 !important;
+    }
+
+    /* Info/warning boxes */
+    .stInfo, [data-testid="stInfo"] {
+        background: rgba(59,130,246,0.08) !important;
+        border: 1px solid rgba(59,130,246,0.2) !important;
+        border-radius: 12px !important;
+        color: #93c5fd !important;
+    }
+
+    /* Spinner */
+    .stSpinner > div {
+        border-top-color: #6366f1 !important;
+    }
+
+    /* Dataframe */
+    .dataframe {
+        border-radius: 12px !important;
+        overflow: hidden !important;
+    }
+
+    /* ══════════════════════════════════════════════════
+       HIDE STREAMLIT CHROME
+    ══════════════════════════════════════════════════ */
+    #MainMenu, footer, header { visibility: hidden; }
+    [data-testid="stToolbar"] { display: none; }
+
+    /* ══════════════════════════════════════════════════
+       PLOTLY CHART CONTAINER
+    ══════════════════════════════════════════════════ */
+    .stPlotlyChart {
+        border-radius: 16px;
+        overflow: hidden;
+        border: 1px solid rgba(99,102,241,0.1);
+        background: rgba(10,10,30,0.3);
+    }
+
+    /* ══════════════════════════════════════════════════
+       SCROLLBAR
+    ══════════════════════════════════════════════════ */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: rgba(15,15,40,0.5); }
+    ::-webkit-scrollbar-thumb {
+        background: rgba(99,102,241,0.4);
+        border-radius: 10px;
+    }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(99,102,241,0.6); }
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -457,17 +866,21 @@ def main() -> None:
     # Force-load cached models
     _load_embedder()
 
-    # ── Header ────────────────────────────────────────────────────────────
+    # ── Hero Header ───────────────────────────────────────────────────────
     st.markdown("""
-    <div style="text-align:center; padding: 10px 0 20px 0;">
-        <h1 style="margin:0; font-weight:700; font-size:2.4rem;
-                   background: linear-gradient(135deg, #818cf8, #c084fc, #f472b6);
-                   -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
-            🏢 CRE Intelligence Dashboard
-        </h1>
-        <p style="opacity:0.7; font-size:1rem; margin-top:6px;">
-            6-source data pipeline · NLP entity extraction · Vector search · RAG insights
-        </p>
+    <div class="hero-wrapper">
+        <div class="hero-badge">🏢 &nbsp; Commercial Real Estate Intelligence</div>
+        <h1 class="hero-title">CRE Intelligence Dashboard</h1>
+        <p class="hero-sub">Multi-source data pipeline · Semantic search · AI-powered RAG insights</p>
+        <div class="hero-divider"></div>
+        <div class="hero-pills">
+            <span class="hero-pill">📰 RSS Feeds</span>
+            <span class="hero-pill">🔍 Web Scraping</span>
+            <span class="hero-pill">📊 Financial API</span>
+            <span class="hero-pill">📋 CRE Lending Data</span>
+            <span class="hero-pill">🧠 Vector Search</span>
+            <span class="hero-pill">⚡ Gemini AI</span>
+        </div>
     </div>
     """, unsafe_allow_html=True)
 
@@ -564,16 +977,20 @@ def main() -> None:
     with col1:
         st.markdown(f"""
         <div class="metric-card">
+            <span class="metric-icon">🗂️</span>
             <div class="metric-value">{len(filtered_df)}</div>
             <div class="metric-label">Total Chunks</div>
+            <div class="metric-trend">▲ Indexed</div>
         </div>
         """, unsafe_allow_html=True)
     with col2:
         unique_docs_count = filtered_df["doc_id"].nunique() if not filtered_df.empty else 0
         st.markdown(f"""
         <div class="metric-card">
+            <span class="metric-icon">📄</span>
             <div class="metric-value">{unique_docs_count}</div>
             <div class="metric-label">Unique Documents</div>
+            <div class="metric-trend">▲ 6 Sources</div>
         </div>
         """, unsafe_allow_html=True)
     with col3:
@@ -583,8 +1000,10 @@ def main() -> None:
                 unique_cities.update(locs)
         st.markdown(f"""
         <div class="metric-card">
+            <span class="metric-icon">🌍</span>
             <div class="metric-value">{len(unique_cities)}</div>
             <div class="metric-label">Cities Detected</div>
+            <div class="metric-trend">▲ NLP Extracted</div>
         </div>
         """, unsafe_allow_html=True)
     with col4:
@@ -594,13 +1013,15 @@ def main() -> None:
                 unique_orgs.update(orgs)
         st.markdown(f"""
         <div class="metric-card">
+            <span class="metric-icon">🏦</span>
             <div class="metric-value">{len(unique_orgs)}</div>
             <div class="metric-label">Organisations</div>
+            <div class="metric-trend">▲ Entity Linked</div>
         </div>
         """, unsafe_allow_html=True)
 
     # ── Visualisations ────────────────────────────────────────────────────
-    st.markdown('<div class="section-header">📈 Analytics</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-header"><span class="sh-icon">📈</span> Market Analytics</div>', unsafe_allow_html=True)
 
     tab1, tab2, tab3 = st.tabs(["Entity Mentions", "Publication Timeline", "CRE Lending Analysis"])
 
@@ -614,7 +1035,7 @@ def main() -> None:
         _render_lending_chart(lending_data)
 
     # ── Semantic Query Engine ─────────────────────────────────────────────
-    st.markdown('<div class="section-header">🔍 Semantic Query Engine (RAG)</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-header"><span class="sh-icon">🔍</span> Semantic Query Engine</div>', unsafe_allow_html=True)
 
     query = st.text_input(
         "Ask a question about CRE markets:",
@@ -640,31 +1061,38 @@ def main() -> None:
         with st.expander("📄 View Retrieved Chunks", expanded=False):
             for i, res in enumerate(results):
                 payload = res.get("payload", {})
+                source_badge = {
+                    "rss": "📰", "scraping": "🔍", "api": "📊",
+                    "xlsx": "📋", "csv_listings": "📁"
+                }.get(payload.get('source_type', ''), '📄')
                 st.markdown(f"""
                 <div class="result-card">
-                    <span class="result-score">Score: {res['score']:.3f}</span>
-                    <strong> {payload.get('title', 'N/A')}</strong>
-                    <span style="opacity:0.6;"> — {payload.get('source_type', '')}</span>
-                    <p style="margin:8px 0 0 0; font-size:0.9rem; opacity:0.85;">
-                        {payload.get('chunk_text', '')[:300]}…
-                    </p>
+                    <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                        <span class="result-score">✦ {res['score']:.3f}</span>
+                        <span style="font-size:0.75rem; color:rgba(148,163,184,0.7); font-weight:500;">{source_badge} {payload.get('source_type','').upper()}</span>
+                    </div>
+                    <div class="result-title">{payload.get('title', 'N/A')}</div>
+                    <div class="result-text">{payload.get('chunk_text', '')[:300]}…</div>
                 </div>
                 """, unsafe_allow_html=True)
 
     # ── Cross-Source Insights Panel ──────────────────────────────────────
-    st.markdown('<div class="section-header">💡 Cross-Source Insights</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-header"><span class="sh-icon">💡</span> Cross-Source Insights</div>', unsafe_allow_html=True)
 
     insights = generate_cross_source_insights(payloads, lending_data)
-    for insight in insights:
-        st.markdown(f"""
-        <div class="insight-card">
-            <h4>{insight['title']}</h4>
-            <p>{insight['body']}</p>
-        </div>
-        """, unsafe_allow_html=True)
+    ins_cols = st.columns(min(len(insights), 2)) if len(insights) >= 2 else [st.columns(1)[0]]
+    for i, insight in enumerate(insights):
+        with ins_cols[i % len(ins_cols)]:
+            st.markdown(f"""
+            <div class="insight-card">
+                <h4>{insight['title']}</h4>
+                <p>{insight['body']}</p>
+            </div>
+            """, unsafe_allow_html=True)
 
     # ── Data Explorer ─────────────────────────────────────────────────────
-    with st.expander("🗂️ Data Explorer — Raw Payloads", expanded=False):
+    st.markdown('<div class="section-header"><span class="sh-icon">🗂️</span> Data Explorer</div>', unsafe_allow_html=True)
+    with st.expander("Browse Raw Payloads", expanded=False):
         if not filtered_df.empty:
             display_cols = ["doc_id", "title", "source_type", "classification", "summary", "published_date", "locations", "entities_org"]
             available_cols = [c for c in display_cols if c in filtered_df.columns]
